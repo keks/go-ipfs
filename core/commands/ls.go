@@ -11,6 +11,7 @@ import (
 	merkledag "github.com/ipfs/go-ipfs/merkledag"
 	path "github.com/ipfs/go-ipfs/path"
 	unixfs "github.com/ipfs/go-ipfs/unixfs"
+	uio "github.com/ipfs/go-ipfs/unixfs/io"
 	unixfspb "github.com/ipfs/go-ipfs/unixfs/pb"
 
 	cid "gx/ipfs/QmXUuRadqDq5BuFWzVU6VuKaSjTcNm1gNCtLvvP1TJCW4z/go-cid"
@@ -74,7 +75,18 @@ The JSON output contains type information.
 
 		var dagnodes []*merkledag.Node
 		for _, fpath := range paths {
-			dagnode, err := core.Resolve(req.Context(), node, path.Path(fpath))
+			p, err := path.ParsePath(fpath)
+			if err != nil {
+				res.SetError(err, cmds.ErrNormal)
+				return
+			}
+
+			r := &path.Resolver{
+				DAG:         node.DAG,
+				ResolveOnce: uio.ResolveUnixfsOnce,
+			}
+
+			dagnode, err := core.Resolve(req.Context(), node.Namesys, r, p)
 			if err != nil {
 				res.SetError(err, cmds.ErrNormal)
 				return

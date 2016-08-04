@@ -87,7 +87,12 @@ func NewRoot(parent context.Context, ds dag.DAGService, node *dag.Node, pf PubFu
 
 	switch pbn.GetType() {
 	case ft.TDirectory:
-		root.val = NewDirectory(parent, node.String(), node, root, ds)
+		rval, err := NewDirectory(parent, node.String(), node, root, ds)
+		if err != nil {
+			return nil, err
+		}
+
+		root.val = rval
 	case ft.TFile, ft.TMetadata, ft.TRaw:
 		fi, err := NewFile(node.String(), node, root, ds)
 		if err != nil {

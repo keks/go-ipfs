@@ -93,7 +93,7 @@ is the raw data of the object.
 			return
 		}
 
-		node, err := core.Resolve(req.Context(), n, fpath)
+		node, err := core.Resolve(req.Context(), n.Namesys, n.Resolver, fpath)
 		if err != nil {
 			res.SetError(err, cmds.ErrNormal)
 			return
@@ -132,7 +132,7 @@ multihash.
 		}
 
 		fpath := path.Path(req.Arguments()[0])
-		node, err := core.Resolve(req.Context(), n, fpath)
+		node, err := core.Resolve(req.Context(), n.Namesys, n.Resolver, fpath)
 		if err != nil {
 			res.SetError(err, cmds.ErrNormal)
 			return
@@ -195,7 +195,7 @@ This command outputs data in the following encodings:
 
 		fpath := path.Path(req.Arguments()[0])
 
-		object, err := core.Resolve(req.Context(), n, fpath)
+		object, err := core.Resolve(req.Context(), n.Namesys, n.Resolver, fpath)
 		if err != nil {
 			res.SetError(err, cmds.ErrNormal)
 			return
@@ -262,7 +262,7 @@ var ObjectStatCmd = &cmds.Command{
 
 		fpath := path.Path(req.Arguments()[0])
 
-		object, err := core.Resolve(req.Context(), n, fpath)
+		object, err := core.Resolve(req.Context(), n.Namesys, n.Resolver, fpath)
 		if err != nil {
 			res.SetError(err, cmds.ErrNormal)
 			return

@@ -15,6 +15,7 @@ import (
 	mfs "github.com/ipfs/go-ipfs/mfs"
 	path "github.com/ipfs/go-ipfs/path"
 	ft "github.com/ipfs/go-ipfs/unixfs"
+	uio "github.com/ipfs/go-ipfs/unixfs/io"
 
 	context "context"
 	logging "gx/ipfs/QmSpJByNKFX1sCsHBEp3R73FL4NF6FnQTEGyNAXHm2GS52/go-log"
@@ -253,7 +254,12 @@ func getNodeFromPath(ctx context.Context, node *core.IpfsNode, p string) (*dag.N
 			return nil, err
 		}
 
-		return core.Resolve(ctx, node, np)
+		resolver := &path.Resolver{
+			DAG:         node.DAG,
+			ResolveOnce: uio.ResolveUnixfsOnce,
+		}
+
+		return core.Resolve(ctx, node.Namesys, resolver, np)
 	default:
 		fsn, err := mfs.Lookup(node.FilesRoot, p)
 		if err != nil {
@@ -336,7 +342,13 @@ Examples:
 		case *mfs.Directory:
 			if !long {
 				var output []mfs.NodeListing
-				for _, name := range fsn.ListNames() {
+				names, err := fsn.ListNames()
+				if err != nil {
+					res.SetError(err, cmds.ErrNormal)
+					return
+				}
+
+				for _, name := range names {
 					output = append(output, mfs.NodeListing{
 						Name: name,
 					})
