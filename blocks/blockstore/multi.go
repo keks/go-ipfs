@@ -8,10 +8,15 @@ import (
 	//"errors"
 
 	blocks "github.com/ipfs/go-ipfs/blocks"
-	key "gx/ipfs/Qmce4Y4zg3sYr7xKM5UueS67vhNni6EeWgCRnb7MbLJMew/go-key"
-	dsq "gx/ipfs/QmTxLSvdhwg68WJimdS6icLPhZi28aTp6b7uihC2Yb47Xk/go-datastore/query"
 	context "gx/ipfs/QmZy2y8t9zQH2a1b8q2ZSLKp17ATuJoCNxxyMFG5qFExpt/go-net/context"
+	dsq "gx/ipfs/QmbzuUusHqaLLoNTDEVLcSF6vZDHZDLPC7p4bztRvvkXxU/go-datastore/query"
+	key "gx/ipfs/Qmce4Y4zg3sYr7xKM5UueS67vhNni6EeWgCRnb7MbLJMew/go-key"
 )
+
+type LocateInfo struct {
+	Prefix string
+	Error  error
+}
 
 type MultiBlockstore interface {
 	Blockstore
@@ -19,6 +24,7 @@ type MultiBlockstore interface {
 	FirstMount() Blockstore
 	Mounts() []string
 	Mount(prefix string) Blockstore
+	Locate(key key.Key) []LocateInfo
 }
 
 type Mount struct {
@@ -88,6 +94,15 @@ func (bs *multiblockstore) Get(key key.Key) (blocks.Block, error) {
 		}
 	}
 	return nil, firstErr
+}
+
+func (bs *multiblockstore) Locate(key key.Key) []LocateInfo {
+	res := make([]LocateInfo, 0, len(bs.mounts))
+	for _, m := range bs.mounts {
+		_, err := m.Blocks.Get(key)
+		res = append(res, LocateInfo{m.Prefix, err})
+	}
+	return res
 }
 
 func (bs *multiblockstore) Put(blk blocks.Block) error {
