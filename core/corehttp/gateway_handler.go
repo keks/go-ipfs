@@ -154,17 +154,24 @@ func (i *gatewayHandler) getOrHeadHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	nd, err := core.Resolve(ctx, i.node, path.Path(urlPath))
-	// If node is in offline mode the error code and message should be different
-	if err == core.ErrNoNamesys && !i.node.OnlineMode() {
-		w.WriteHeader(http.StatusServiceUnavailable)
-		fmt.Fprint(w, "Could not resolve path. Node is in offline mode.")
-		return
-	} else if err == namesys.ErrResolveFailed {
+	switch err {
+	case nil:
+		// core.Resolve worked
+	case namesys.ErrResolveFailed:
 		// Don't log that error as it is just noise
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, "Path Resolve error: %s", err.Error())
+		log.Info("Path Resolve error: %s", err.Error())
 		return
-	} else if err != nil {
+	case core.ErrNoNamesys:
+		if !i.node.OnlineMode() {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			fmt.Fprint(w, "Could not resolve path. Node is in offline mode.")
+			return
+		}
+		fallthrough
+	default:
+		// all other erros
 		webError(w, "Path Resolve error", err, http.StatusBadRequest)
 		return
 	}
