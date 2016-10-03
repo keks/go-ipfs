@@ -27,6 +27,7 @@ import (
 	fsrepo "github.com/ipfs/go-ipfs/repo/fsrepo"
 
 	logging "gx/ipfs/QmSpJByNKFX1sCsHBEp3R73FL4NF6FnQTEGyNAXHm2GS52/go-log"
+	"gx/ipfs/QmXuBJ7DR6k3rmUEKtvVMhwjmXDuJgXXPUt4LQXKBMsU93/go-os-helper"
 	manet "gx/ipfs/QmY83KqqnQ286ZWbV2x7ixpeemH3cBpk8R54egS619WYff/go-multiaddr-net"
 	loggables "gx/ipfs/QmYrv4LgCC8FhG2Ab4bwuq5DqBdwMtx3hMb3KKJDZcr2d7/go-libp2p-loggables"
 	ma "gx/ipfs/QmYzDkkgAEmrcNzFCiYo6L1dTX4EAG1gZkbtdbd9trL4vd/go-multiaddr"
@@ -590,18 +591,28 @@ func profileIfEnabled() (func(), error) {
 	return func() {}, nil
 }
 
-var apiFileErrorFmt string = `Failed to parse %[1]s/api file.
+var apiFileErrorFmt string = `Failed to parse '%[1]s/api' file.
 	error: %[2]s
-If there is no daemon running, it is safe to delete it.
-You can do it with:
-	ps aux | grep ipfs # check there is no ipfs daemon
-	rm %[1]s/api
+If you're sure go-ipfs isn't running, you can just delete it.
+Otherwise check:
 `
+var checkIPFSUnixFmt = "\tps aux | grep ipfs"
+var checkIPFSWinFmt = "\ttasklist | findstr ipfs"
 
 // getApiClient checks the repo, and the given options, checking for
 // a running API service. if there is one, it returns a client.
 // otherwise, it returns errApiNotRunning, or another error.
 func getApiClient(repoPath, apiAddrStr string) (cmdsHttp.Client, error) {
+	var apiErrorFmt string
+	switch {
+	case osh.IsUnix():
+		apiErrorFmt = apiFileErrorFmt + checkIPFSUnixFmt
+	case osh.IsWindows():
+		apiErrorFmt = apiFileErrorFmt + checkIPFSWinFmt
+	default:
+		apiErrorFmt = apiFileErrorFmt
+	}
+
 	var addr ma.Multiaddr
 	var err error
 	if len(apiAddrStr) != 0 {
@@ -616,11 +627,11 @@ func getApiClient(repoPath, apiAddrStr string) (cmdsHttp.Client, error) {
 		}
 
 		if err != nil {
-			return nil, fmt.Errorf(apiFileErrorFmt, repoPath, err.Error())
+			return nil, fmt.Errorf(apiErrorFmt, repoPath, err.Error())
 		}
 	}
 	if len(addr.Protocols()) == 0 {
-		return nil, fmt.Errorf(apiFileErrorFmt, repoPath, "multiaddr doesn't provide any protocols")
+		return nil, fmt.Errorf(apiErrorFmt, repoPath, "multiaddr doesn't provide any protocols")
 	}
 
 	return apiClientForAddr(addr)

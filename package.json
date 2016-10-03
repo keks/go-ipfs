@@ -269,6 +269,12 @@
       "hash": "QmaUewj1HPiCX5mjNHmevQiNWr4eeAn7HBfHcGVbRyafdo",
       "name": "floodsub",
       "version": "0.6.2"
+	},
+	{
+      "author": "Kubuxu",
+      "hash": "QmXuBJ7DR6k3rmUEKtvVMhwjmXDuJgXXPUt4LQXKBMsU93",
+      "name": "go-os-helper",
+      "version": "0.0.0"
     }
   ],
   "gxVersion": "0.4.0",
