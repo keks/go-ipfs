@@ -27,7 +27,7 @@ import (
 	fsrepo "github.com/ipfs/go-ipfs/repo/fsrepo"
 
 	logging "gx/ipfs/QmSpJByNKFX1sCsHBEp3R73FL4NF6FnQTEGyNAXHm2GS52/go-log"
-	"gx/ipfs/QmXuBJ7DR6k3rmUEKtvVMhwjmXDuJgXXPUt4LQXKBMsU93/go-os-helper"
+	osh "gx/ipfs/QmXuBJ7DR6k3rmUEKtvVMhwjmXDuJgXXPUt4LQXKBMsU93/go-os-helper"
 	manet "gx/ipfs/QmY83KqqnQ286ZWbV2x7ixpeemH3cBpk8R54egS619WYff/go-multiaddr-net"
 	loggables "gx/ipfs/QmYrv4LgCC8FhG2Ab4bwuq5DqBdwMtx3hMb3KKJDZcr2d7/go-libp2p-loggables"
 	ma "gx/ipfs/QmYzDkkgAEmrcNzFCiYo6L1dTX4EAG1gZkbtdbd9trL4vd/go-multiaddr"
@@ -619,6 +619,9 @@ func getApiClient(repoPath, apiAddrStr string) (cmdsHttp.Client, error) {
 		addr, err = ma.NewMultiaddr(apiAddrStr)
 		if err != nil {
 			return nil, err
+		}
+		if len(addr.Protocols()) == 0 {
+			return nil, fmt.Errorf("mulitaddr doesn't provide any protocols")
 		}
 	} else {
 		addr, err = fsrepo.APIAddr(repoPath)
