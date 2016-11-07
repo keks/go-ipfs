@@ -159,6 +159,9 @@ func (i internalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// make sure we don't write to the connection before we read everything
+	r.Body, w = delayWriter(r.Body, w)
+
 	req, err := Parse(r, i.root)
 	if err != nil {
 		if err == ErrNotFound {
@@ -298,11 +301,11 @@ func flushCopy(w io.Writer, r io.Reader) error {
 		return err
 	}
 	for {
+		f.Flush()
 		n, err := r.Read(buf)
 		switch err {
 		case io.EOF:
 			if n <= 0 {
-				f.Flush()
 				return nil
 			}
 			// if data was returned alongside the EOF, pretend we didnt
